@@ -1,50 +1,51 @@
-const shop = [
-  {
-    "2":{
-      uuid:"2",
-      type:"Frutas",
-      title:"Maça Gala",
-      price:0.50
-    }
-  },
-  {
-    "1010":{
-      uuid:"1010",
-      type:"Higiene",
-      title:"Shampoo Head&Shoulders",
-      price:8.50
-    }
-  },
-  {
-    "1350":{
-      uuid:"1350",
-      type:"Bebidas",
-      title:"Coca-Cola",
-      price:6.80
-    }
-  }
-]
-const state = {
-  cart:[]
-};
-
 ShopCart = () => {
+  const state = {};
+  const main = () => {
+    state.shop = null;
+    state.cart = [];
+  }
   const formatCurrency = Intl.NumberFormat('pt-BR',{style:"currency",currency:"BRL"});
-  const product = (...shopItem) => () => Object.assign({},shopItem);
-  const addItem = (shop) => (uuid) => shop.map(item => (Object.entries(item)[0][0] === uuid.toString()) ? product(Object.entries(item)[0][1]) : false).filter(item => item !== false);
-  const removeItem = (cart) => (uuid) => cart.filter(item => item[0]()[0]['uuid'] !== uuid.toString());
-  const listItens = (cart) => cart.map(item => item[0]());
-  const getSubTotal = (cart) => formatCurrency.format(cart.reduce((acc,item) => acc += item[0]()[0]['price'],0));
-  const getFromCart = (cart) => (child) => cart.map(item => item[0]()[0][child]);
-  const getFromShop = (shop) => (child) => shop.map(item => Object.entries(item)[0][1][child]); 
+  const addShopCatalog = (struct) => state.shop = struct;
+  const add = (item) => state.cart = state.cart.concat(_addItem(item));
+  const remove = (item) => state.cart = _removeItem(item);
+  const addQtd = (uuid) => state.cart.forEach(item => (item.uuid === uuid.toString()) ? item.qtd++ : false);
+  const removeQtd = (uuid) => state.cart.forEach(item => (item.uuid === uuid.toString()) ? item.qtd-- : false); 
+  const getSubTotal = () => formatCurrency.format(state.cart.reduce((acc,item) => acc += item.price * item.qtd,0));
+  const getFromCart = (child,needle) => state.cart.map(item => {
+    if(typeof child !== 'undefined'){ 
+      if(typeof item.uuid !== 'undefined' && item.uuid === child){
+        return (typeof needle === 'string') ? item[needle] : item;
+      }else{
+        return false;
+      }
+    }
+    return item;
+  }).filter(item => item !== false);
+  const getFromShop = (child,needle) => state.shop.map(item => {
+    if(typeof child !== 'undefined'){ 
+      if(typeof item.uuid !== 'undefined' && item.uuid === child){
+        return (typeof needle === 'string') ? item[needle] : item;
+      }else{
+        return false;
+      }
+    }
+    return item;
+  }).filter(item => item !== false);
+  const _addItem = (uuid) => state.shop.map(item => (item.uuid === uuid.toString()) ? Object.assign({},item) : false).filter(item => item !== false);
+  const _removeItem = (uuid) => state.cart.filter(item => item[0].uuid !== uuid.toString());
+  const _comp = (...fns) => (initialArg) => fns.reduce((acc,item) => item(acc),initialArg);
+  main();
+
   return{
-    addItem:addItem,
-    listItens:listItens,
+    addShopCatalog:addShopCatalog,
+    add:add,
+    remove:remove,
+    addQtd:addQtd,
+    removeQtd:removeQtd,
     getSubTotal:getSubTotal,
-    removeItem:removeItem,
     getFromCart:getFromCart,
     getFromShop:getFromShop
   }
 }
 
-module.exports = ShopCart;
+//export default ShopCart;
